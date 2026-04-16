@@ -10,6 +10,8 @@ print(f"pymongo == {pymongo.version}")
 
 
 
+# Script de migration
+
 
 # --- Configuration ---
 MONGO_URI = "mongodb://mongo:27017/"
