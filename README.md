@@ -1,3 +1,5 @@
+README
+
 Ce projet a pour objectif de migrer un fichier CSV de données patients vers MongoDB, avec un pipeline automatisée qui :
 
 nettoie et valide les données
