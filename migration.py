@@ -8,14 +8,9 @@ import os
 print(f"pandas == {pd.__version__}")
 print(f"pymongo == {pymongo.version}")
 
-
-
-# Script de migration
-
-
 # --- Configuration ---
-MONGO_URI = "mongodb://mongo:27017/"
-DB_NAME = "sante_db"
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:admin123@localhost:27017/?authSource=admin")
+DB_NAME = os.getenv("DB_NAME", "sante_db")
 CSV_FILE = "patients.csv"
 
 
@@ -24,7 +19,6 @@ def connect_mongo():
     client = MongoClient(MONGO_URI)
     db = client[DB_NAME]
     return client, db
-
 
 # --- 2. Charger CSV ---
 def load_csv(path):
