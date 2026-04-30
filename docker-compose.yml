@@ -1,4 +1,5 @@
-version: '3.8' 
+version: '3.8'
+
 
 services:
 
@@ -9,6 +10,10 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: sante_db
     networks:
       - migration_network
 
@@ -20,6 +25,9 @@ services:
     volumes:
       - .:/app
     command: python migration.py
+    environment:
+      MONGO_URI: mongodb://admin:admin123@mongo:27017/?authSource=admin
+      DB_NAME: sante_db
     networks:
       - migration_network
 
@@ -28,3 +36,4 @@ volumes:
 
 networks:
   migration_network:
+    driver: bridge
