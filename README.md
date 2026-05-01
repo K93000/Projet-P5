@@ -1,175 +1,180 @@
-README
+🔹 Introduction
 
-Ce projet a pour objectif de migrer un fichier CSV de données patients vers MongoDB, avec un pipeline automatisée qui :
+Ce projet permet de migrer un fichier CSV de données patients vers MongoDB, via un pipeline automatisé qui :
 
-nettoie et valide les données
-insère les données dans MongoDB
-crée des logs de chaque migration
-est conteneurisée pour être facilement déployable avec Docker
+- nettoie et valide les données
+- insère les données dans MongoDB
+- génère des logs de chaque migration
+- est conteneurisé avec Docker pour un déploiement simple
 
-Le projet simule un processus réel en entreprise pour gérer des bases de données médicales ou clients.
+Le projet simule un cas réel en entreprise pour la gestion de données médicales ou clients.
 
 
- ▶️ 1. Prérequis
+
+🔹 Structure du projet
+
+
+Projet_5/
+│
+├── migration.py              # Script principal de migration
+├── docker-compose.yml        # Orchestration des conteneurs
+├── Dockerfile                # Construction de l'image Python
+├── requirements.txt          # Dépendances Python (pandas, pymongo, pytest)
+├── patients.csv              # Fichier source des données patients
+├── README.md                 # Documentation du projet
+├── .gitignore                # Fichiers/dossiers exclus du versionnement Git
+│
+└── tests/
+    └── test_validation.py    # Tests unitaires (validation des données)
+
+
+
+▶️ 1. Prérequis
 
 Avant de lancer le projet, il est nécessaire d’avoir :
 
-- Docker : recommandé pour exécuter le projet dans un environnement isolé et reproductible
-- Python : nécessaire pour exécuter le script sans Docker
-- MongoDB Compass ou mongosh : pour vérifier les données après la migration
+
+- Docker Desktop → lance les conteneurs
+- Python → exécute le script
+- MongoDB Compass → visualisation des données
+- mongosh → requêtes en ligne de commande
 
 
-✔ Outils requis
+▶️ 2. Exécution du projet
 
-- Python : nécessaire uniquement si vous souhaitez exécuter le script sans Docker
-- Docker Desktop : Permet de lancer MongoDB et l’application dans des conteneurs, mais aussi de démarrer plusieurs services en une seule commande
-- MongoDB Compass : Interface graphique pour visualiser les données
-- mongosh : Permet d’interroger MongoDB en ligne de commande
-- requirements.txt installé
-- docker-compose.yml présent
+ Option 1 : avec Docker
 
+Commande : docker compose up --build
 
-▶️ 2. Exécution en local
+Lance MongoDB + le script automatiquement
 
-Le script peut être exécuté sans Docker.
+Option 2 : sans Docker
 
-Pour cela l installation des dépendances est nécessaire grace à la commande :
+Installation des dépendances :
 pip install -r requirements.txt
 
-l'éxécution du script se fait grace à la commande :
+Exécution du script :
 python migration.py
+Le script fonctionne de manière autonome
 
-Cela montre que le script est autonome et ne dépend pas uniquement de Docker.
 
+▶️ 3. Dépendances
 
-▶️ 3. Dépendances Python
+Le fichier requirements.txt contient contient les bibliothèques nécessaires  à savoir :
+•	pandas → lecture et traitement des données CSV 
+•	pymongo → connexion et insertion des données dans MongoDB
+•	pytest → tests unitaires (outil de vérification du code)
 
-Le fichier requirements.txt contient les bibliothèques nécessaires au projet :
-
-pandas : lecture et traitement des données CSV
-pymongo : connexion et insertion des données dans MongoDB
-pytest : framework de tests (outil de vérification du code)
-
-Il permet de recréer facilement le même environnement :
+L'installation permet de recréer facilement le même environnement via la commande :
 pip install -r requirements.txt
 
 
 ▶️ 4. Tests
 
-Le projet inclut des tests unitaires via le fichier test_validation.py.
+Le projet contient des tests (test_validation.py).
+Ils vérifient :
+•	les colonnes obligatoires 
+•	le nettoyage des données 
+•	la gestion des erreurs 
+Exécution :
+Pytest
 
-Ces tests permettent de vérifier :
-
-la présence des colonnes obligatoires
-le nettoyage des données
-la gestion des erreurs
-Exécution des tests
-pytest
 
 
 ▶️ 5. Sécurité
 
-Le projet intègre des bonnes pratiques de base :
+Le projet applique plusieurs bonnes pratiques :
 
-utilisation d’une variable d’environnement MONGO_URI
-aucune information sensible codée en dur
-isolation des services grâce à Docker
-accès limité à MongoDB (local ou réseau Docker)
+•	utilisation d’une variable d’environnement MONGO_URI 
+•	authentification MongoDB (utilisateur / mot de passe) 
+•	aucune information sensible codée en dur dans le script
+•	isolation des services via Docker 
 
-Limite actuelle :
+L' authentification MongoDB a  été définie dans le fichier `docker-compose.yml`.
 
-pas d’authentification MongoDB
-pas de chiffrement
+Identifiants par défaut :
+- Utilisateur : `admin`
+- Mot de passe : `admin123`
+- Base de données : `sante_db`
+
+Touteces bonnes pratiques permettent de :
+•	sécuriser l’accès à la base 
+•	éviter l’exposition des identifiants  
 
 
 ▶️ 6. Configuration MongoDB
 
-Le script utilise une variable d’environnement MONGO_URI.
+Le script utilise la variable MONGO_URI.
 
-En local :
+🔹 En local
 mongodb://localhost:27017/
-Avec Docker Compose :
-mongodb://mongo:27017/
 
-Cela permet d’utiliser le même script dans plusieurs environnements sans modification.
+🔹 Avec Docker
+mongodb://admin:admin123@mongo:27017/?authSource=admin
+Cela permet d’utiliser le même code dans plusieurs environnements
 
+▶️ 7. Architecture Docker
 
-▶️ 7. Volume + Network
-
-- Network
-
-Un réseau Docker est utilisé pour permettre la communication entre les conteneurs :
+🔹 Network
 networks:
   migration_network:
+Permet aux services (migration et mongo) de communiquer entre eux
 
-Le network permet aux services (migration et mongo) de communiquer entre eux.
-
-- Volume
-
-Un volume Docker est utilisé pour conserver les données grace à :
+🔹 Volume
 volumes:
   mongo_data:
-
-Montage dans MongoDB :
-- mongo_data:/data/db
-
- Le volume permet de conserver les données même après arrêt des conteneurs
-
-- Architecture
-
-Le projet utilise Docker Compose pour lancer plusieurs éléments ensemble.
-
-On appelle cela une architecture :
-la manière dont les éléments sont organisés et communiquent entre eux.
-
-Les 4 éléments :
-
-1 Service MongoDB : stocke les patients et les logs
-
-2 Service de migration Python : lit le CSV, nettoie les données, envoie dans MongoDB
-
-3 Volume MongoDB : conserve les données et évite la perte après redémarrage
-
-4 Réseau Docker : connecte les services entre eux
-
-- Fonctionnement global
-
-Docker démarre MongoDB
-Docker démarre le script Python
-Le script lit le CSV
-Il envoie les données à MongoDB (via le réseau)
-MongoDB les stocke dans le volume
+Montage :
+mongo_data:/data/db
+Le volume permet de conserver les données, même après arrêt des conteneurs.
 
 
-▶️ 8. Exemple de log
+🔹 Fonctionnement
+1.	Docker démarre MongoDB 
+2.	Docker lance le script Python 
+3.	Le script lit le fichier CSV 
+4.	Les données sont envoyées à MongoDB 
+5.	MongoDB les stocke dans le volume
+
+
+▶️ 8. Log
 
 Chaque exécution du script de migration génère un log dans la collection logs qui se presente de la maniere suivante:
-
 {
-  "run_id": "20260402_103000",          Identifiant unique de la migration (basé sur la date et l’heure)     
-  "event": "migration_completed",       Type d’événement enregistré (ici : fin de migration)
-  "status": "success",                  Résultat de la migration (success ou error)
-  "rows_inserted": 55500,               Nombre de lignes insérées depuis le CSV
-  "rows_in_db": 55500,                  Nombre réel de documents présents en base après insertion
-  "duration_seconds": 7.43,             Temps total d’exécution de la migration
+  "run_id": "20260402_103000",         	Identifiant unique de la migration (basé sur la date et l’heure)     
+  "event": "migration_completed",       	Type d’événement enregistré (ici : fin de migration)
+  "status": "success",                 		Résultat de la migration (success ou error)
+  "rows_inserted": 55500,              	Nombre de lignes insérées depuis le CSV
+  "rows_in_db": 55500,                  	Nombre réel de documents présents en base après insertion
+  "duration_seconds": 7.43,             	Temps total d’exécution de la migration
   "created_at": "2026-04-02T10:30:00Z"  Date de création du log (format UTC)
 }
 
 
-▶️ 9. Limites / améliorations
 
-- Limites
+▶️ 9. Limites et améliorations
 
-- Orchestration encore simple, pas d automatisation.
-- Validation perfectible, le nettoyage peut être amélioré (ex : âge négatif ou date invalide possible)
-- Logs à enrichir, pas d’information sur les erreurs ou lignes rejetées
-- Couverture de tests limitée, on ne sait pas :combien de lignes ont été rejetées, quelles erreurs ont été rencontrées
-- Sécurité à renforcer, pas d’utilisateur/mot de passe, base accessible sans restriction
+🔹 Limites
 
-- Améliorations
+•	Orchestration encore simple, pas d automatisation.
+•	Logs à enrichir, pas d’information sur les erreurs ou lignes rejetées
+•	Validation perfectible, le nettoyage peut être amélioré (ex : âge négatif ou date invalide possible)
+•	sécurité basique 
+•	pas d’automatisation avancée
+•	 Couverture de tests limitée, on ne sait pas :combien de lignes ont été rejetées, quelles erreurs ont été rencontrées 
 
-- Ajout d’un fichier .env avec a l interieur 
-MONGO_URI=mongodb://mongo:27017/
+🔹 Améliorations possibles
+
+•	Ajout d’un fichier .env : 
+MONGO_URI=mongodb://admin:admin123@mongo:27017/?authSource=admin
 DB_NAME=sante_db
-- Validation métier renforcée, ajouter des règles plus strictes (âge > 0, email valide, date correcte)
-- Gestion fine des erreurs, afin de ne pas bloquer toute la migration (ignorer les lignes incorrectes, les enregistrer dans un fichier errors.csv)
+•	Validation métier renforcée, ajouter des règles plus strictes (âge > 0, email valide, date correcte)
+•	Gestion fine des erreurs, afin de ne pas bloquer toute la migration (ignorer les lignes incorrectes, les enregistrer dans un fichier errors.csv)
+•	amélioration des logs (erreurs détaillées)
+•	sécurisation avancée (meilleurs mots de passe, rôles)
+•	déploiement cloud (AWS, MongoDB Atlas) 
+
+
+
+🔹 Conclusion
+Ce projet démontre la mise en place d’un pipeline de données automatisé,
+reproductible et sécurisé, conforme aux pratiques utilisées en entreprise.
