@@ -1,8 +1,4 @@
-version: '3.8'
-
-
 services:
-
   mongo:
     image: mongo:6
     container_name: mongo_db
@@ -10,10 +6,11 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - ./users-init.js:/docker-entrypoint-initdb.d/users-init.js:ro
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
-      MONGO_INITDB_DATABASE: sante_db
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
     networks:
       - migration_network
 
@@ -26,8 +23,8 @@ services:
       - .:/app
     command: python migration.py
     environment:
-      MONGO_URI: mongodb://admin:admin123@mongo:27017/?authSource=admin
-      DB_NAME: sante_db
+      MONGO_URI: ${MONGO_URI}
+      DB_NAME: ${MONGO_DATABASE}
     networks:
       - migration_network
 
@@ -36,4 +33,3 @@ volumes:
 
 networks:
   migration_network:
-    driver: bridge

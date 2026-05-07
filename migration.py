@@ -9,9 +9,12 @@ print(f"pandas == {pd.__version__}")
 print(f"pymongo == {pymongo.version}")
 
 # --- Configuration ---
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:admin123@localhost:27017/?authSource=admin")
+MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = os.getenv("DB_NAME", "sante_db")
 CSV_FILE = "patients.csv"
+
+if not MONGO_URI:
+    raise ValueError("La variable d'environnement MONGO_URI est manquante.")
 
 
 # --- 1. Connexion MongoDB ---

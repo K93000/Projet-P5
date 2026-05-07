@@ -1,6 +1,6 @@
 🔹 Introduction
 
-Ce projet permet de migrer un fichier CSV de données patients vers MongoDB, via un pipeline automatisé qui :
+Ce projet permet de migrer un fichier CSV de données patients vers MongoDB via un pipeline automatisé qui :
 
 - nettoie et valide les données
 - insère les données dans MongoDB
@@ -9,172 +9,234 @@ Ce projet permet de migrer un fichier CSV de données patients vers MongoDB, via
 
 Le projet simule un cas réel en entreprise pour la gestion de données médicales ou clients.
 
-
-
 🔹 Structure du projet
-
 
 Projet_5/
 │
 ├── migration.py              # Script principal de migration
 ├── docker-compose.yml        # Orchestration des conteneurs
 ├── Dockerfile                # Construction de l'image Python
-├── requirements.txt          # Dépendances Python (pandas, pymongo, pytest)
+├── users-init.js             # Création des utilisateurs MongoDB
+├── requirements.txt          # Dépendances Python
 ├── patients.csv              # Fichier source des données patients
 ├── README.md                 # Documentation du projet
-├── .gitignore                # Fichiers/dossiers exclus du versionnement Git
+├── .gitignore                # Fichiers exclus du versionnement Git
+├── .env                      # Variables d’environnement (non versionné)
 │
 └── tests/
-    └── test_validation.py    # Tests unitaires (validation des données)
-
-
+    └── test_validation.py    # Tests unitaires
 
 ▶️ 1. Prérequis
 
 Avant de lancer le projet, il est nécessaire d’avoir :
 
-
 - Docker Desktop → lance les conteneurs
 - Python → exécute le script
 - MongoDB Compass → visualisation des données
-- mongosh → requêtes en ligne de commande
-
+- mongosh → requêtes MongoDB en ligne de commande
 
 ▶️ 2. Exécution du projet
 
- Option 1 : avec Docker
+🔹 Option 1 : avec Docker
 
-Commande : docker compose up --build
+Commande :
 
-Lance MongoDB + le script automatiquement
+docker compose up --build
 
-Option 2 : sans Docker
+Cette commande :
+
+démarre MongoDB
+crée automatiquement les utilisateurs et rôles MongoDB
+lance le script Python
+exécute la migration des données
+
+🔹 Option 2 : sans Docker
 
 Installation des dépendances :
+
 pip install -r requirements.txt
 
 Exécution du script :
-python migration.py
-Le script fonctionne de manière autonome
 
+python migration.py
+
+Le script fonctionne également de manière autonome.
 
 ▶️ 3. Dépendances
 
-Le fichier requirements.txt contient contient les bibliothèques nécessaires  à savoir :
-•	pandas → lecture et traitement des données CSV 
-•	pymongo → connexion et insertion des données dans MongoDB
-•	pytest → tests unitaires (outil de vérification du code)
+Le fichier requirements.txt contient les bibliothèques nécessaires :
 
-L'installation permet de recréer facilement le même environnement via la commande :
+- pandas → lecture et traitement des données CSV
+- pymongo → connexion et insertion des données dans MongoDB
+- pytest → tests unitaires
+
+Installation :
+
 pip install -r requirements.txt
 
+Cette commande permet de recréer facilement le même environnement de travail.
 
 ▶️ 4. Tests
 
-Le projet contient des tests (test_validation.py).
-Ils vérifient :
-•	les colonnes obligatoires 
-•	le nettoyage des données 
-•	la gestion des erreurs 
+Le projet contient des tests unitaires dans :
+
+tests/test_validation.py
+
+Ces tests permettent de vérifier :
+
+- les colonnes obligatoires
+- le nettoyage des données
+- les conversions de types
+- la gestion des erreurs
+
 Exécution :
-Pytest
 
+pytest
 
+Les tests garantissent que les données sont correctement validées avant leur insertion dans MongoDB.
 
 ▶️ 5. Sécurité
 
-Le projet applique plusieurs bonnes pratiques :
+Le projet applique plusieurs bonnes pratiques de sécurité :
 
-•	utilisation d’une variable d’environnement MONGO_URI 
-•	authentification MongoDB (utilisateur / mot de passe) 
-•	aucune information sensible codée en dur dans le script
-•	isolation des services via Docker 
+- utilisation d’un fichier .env
+- authentification MongoDB
+- séparation des utilisateurs selon les rôles
+- aucune information sensible codée en dur dans le script
+- isolation des services via Docker
 
-L' authentification MongoDB a  été définie dans le fichier `docker-compose.yml`.
+Les informations sensibles sont stockées dans un fichier .env
+non versionné grâce au .gitignore.
 
-Identifiants par défaut :
-- Utilisateur : `admin`
-- Mot de passe : `admin123`
-- Base de données : `sante_db`
+Exemple de .gitignore :
 
-Touteces bonnes pratiques permettent de :
-•	sécuriser l’accès à la base 
-•	éviter l’exposition des identifiants  
+.env
+__pycache__/
+.pytest_cache/
 
+Cela permet :
 
-▶️ 6. Configuration MongoDB
+- de sécuriser l’accès à la base
+- d’éviter l’exposition des identifiants sur GitHub
+- de centraliser la configuration de l’environnement
 
-Le script utilise la variable MONGO_URI.
+▶️ 6. Gestion des rôles MongoDB
 
-🔹 En local
-mongodb://localhost:27017/
+Le projet utilise plusieurs utilisateurs MongoDB afin de séparer les permissions selon les besoins métier.
 
-🔹 Avec Docker
-mongodb://admin:admin123@mongo:27017/?authSource=admin
-Cela permet d’utiliser le même code dans plusieurs environnements
+Utilisateur	    Rôle	          Permissions
+- admin_user	  dbAdmin	        administration de la base
+- medecin	      readWrite	      lecture et modification des données
+- infirmiere	  read	          consultation des données uniquement
+- migration	    readWrite	      utilisé par le script Python
 
-▶️ 7. Architecture Docker
+Cette organisation permet d’appliquer le principe du moindre privilège afin de renforcer la sécurité des données.
 
-🔹 Network
+▶️ 7. Configuration MongoDB
+
+Le script Python utilise la variable d’environnement :
+
+MONGO_URI
+
+Cette variable est définie dans le fichier .env.
+
+Le même script peut ainsi fonctionner :
+
+- en local
+- avec Docker
+- dans différents environnements 
+
+sans modifier le code source.
+
+▶️ 8. Architecture Docker
+
+🔹 Réseau Docker
+
 networks:
   migration_network:
-Permet aux services (migration et mongo) de communiquer entre eux
 
-🔹 Volume
+Le réseau permet aux services :
+
+- mongo
+- migration
+
+de communiquer entre eux de manière isolée.
+
+🔹 Volume Docker
+
 volumes:
   mongo_data:
-Montage :
+
+Montage utilisé :
+
 mongo_data:/data/db
-Le volume permet de conserver les données, même après arrêt des conteneurs.
 
+Le volume permet de conserver les données MongoDB même après l’arrêt des conteneurs.
 
-🔹 Fonctionnement
-1.	Docker démarre MongoDB 
-2.	Docker lance le script Python 
-3.	Le script lit le fichier CSV 
-4.	Les données sont envoyées à MongoDB 
-5.	MongoDB les stocke dans le volume
+🔹 Fonctionnement global
 
+- Docker démarre MongoDB
+- Docker exécute mongo-init.js
+- Les utilisateurs et rôles MongoDB sont créés
+- Docker lance le script Python
+- Le script lit le fichier CSV
+- Les données sont nettoyées et validées
+- Les données sont insérées dans MongoDB
+- Un log de migration est généré
 
-▶️ 8. Log
+▶️ 9. Logs
 
-Chaque exécution du script de migration génère un log dans la collection logs qui se presente de la maniere suivante:
+Chaque exécution du script génère un log dans la collection logs.
+
+Exemple :
+
 {
-  "run_id": "20260402_103000",         	Identifiant unique de la migration (basé sur la date et l’heure)     
-  "event": "migration_completed",       	Type d’événement enregistré (ici : fin de migration)
-  "status": "success",                 		Résultat de la migration (success ou error)
-  "rows_inserted": 55500,              	Nombre de lignes insérées depuis le CSV
-  "rows_in_db": 55500,                  	Nombre réel de documents présents en base après insertion
-  "duration_seconds": 7.43,             	Temps total d’exécution de la migration
-  "created_at": "2026-04-02T10:30:00Z"  Date de création du log (format UTC)
+  "run_id": "20260402_103000",
+  "event": "migration_completed",
+  "rows_inserted": 55500,
+  "rows_in_db": 55500,
+  "duration_seconds": 7.43,
+  "created_at": "2026-04-02T10:30:00Z"
 }
+🔹 Informations enregistrées
+identifiant unique de migration
+nombre de lignes insérées
+nombre réel de documents présents en base
+durée d’exécution
+date de migration
 
+Ces logs permettent d’assurer la traçabilité des migrations.
 
-
-▶️ 9. Limites et améliorations
+▶️ 10. Limites et améliorations
 
 🔹 Limites
 
-•	Orchestration encore simple, pas d automatisation.
-•	Logs à enrichir, pas d’information sur les erreurs ou lignes rejetées
-•	Validation perfectible, le nettoyage peut être amélioré (ex : âge négatif ou date invalide possible)
-•	sécurité basique 
-•	pas d’automatisation avancée
-•	 Couverture de tests limitée, on ne sait pas :combien de lignes ont été rejetées, quelles erreurs ont été rencontrées 
+orchestration encore simple
+sécurité encore améliorable
+logs peu détaillés
+validation métier perfectible
+couverture de tests limitée
+gestion des erreurs encore basique
 
 🔹 Améliorations possibles
 
-•	Ajout d’un fichier .env : 
-MONGO_URI=mongodb://admin:admin123@mongo:27017/?authSource=admin
-DB_NAME=sante_db
-•	Validation métier renforcée, ajouter des règles plus strictes (âge > 0, email valide, date correcte)
-•	Gestion fine des erreurs, afin de ne pas bloquer toute la migration (ignorer les lignes incorrectes, les enregistrer dans un fichier errors.csv)
-•	amélioration des logs (erreurs détaillées)
-•	sécurisation avancée (meilleurs mots de passe, rôles)
-•	déploiement cloud (AWS, MongoDB Atlas) 
-
-
+validation métier renforcée
+gestion détaillée des erreurs
+journalisation avancée
+amélioration de la sécurité
+déploiement cloud (AWS, MongoDB Atlas)
+automatisation plus avancée
 
 🔹 Conclusion
-Ce projet démontre la mise en place d’un pipeline de données automatisé,
-reproductible et sécurisé, conforme aux pratiques utilisées en entreprise.
+
+Ce projet démontre la mise en place d’un pipeline de données automatisé, reproductible et sécurisé, conforme aux pratiques utilisées en entreprise.
+
+Il met en œuvre :
+
+Docker
+MongoDB
+Python
+gestion des rôles
+validation des données
+journalisation des migrations
+tests unitaires
